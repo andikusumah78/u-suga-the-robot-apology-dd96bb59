@@ -4,14 +4,11 @@
 Writes a two-line robot apology to /output/entry.txt.
 
 The gate requires UTF-8 text of 1 to 400 characters, not only
-whitespace. The apology is fixed text, so every run writes
-byte-identical output: no randomness, no clock, no network,
-pure Python 3.13 standard library.
-
-The two lines live in ENTRY_LINES and are joined with a single
-newline. check_text() validates the joined text against the gate
-before anything is written, and write_entry() reads the file back
-to prove the bytes on disk are exactly the validated text.
+whitespace, and the brief requires exactly two lines: one sentence
+owning a specific mistake, one sentence naming the lesson that
+follows from it. check_text() enforces both before anything is
+written, and write_entry() reads the file back to prove the bytes
+on disk are exactly the validated text.
 """
 
 import os
@@ -37,7 +34,8 @@ def join_lines(lines):
 
 
 def check_text(text):
-    """Check the text against the gate: 1-400 chars, not blank, UTF-8."""
+    """Check the text against the gate: 1-400 chars, not blank, UTF-8,
+    and exactly two lines, as the brief requires."""
     if not isinstance(text, str):
         raise TypeError("entry text must be str")
     if not text.strip():
@@ -49,6 +47,13 @@ def check_text(text):
             "entry text is %d chars, over the %d limit"
             % (len(text), GATE_MAX_CHARS)
         )
+    lines = text.split("\n")
+    if len(lines) != 2:
+        raise ValueError(
+            "entry text must be exactly two lines, got %d" % len(lines)
+        )
+    if not all(line.strip() for line in lines):
+        raise ValueError("each of the two lines must hold text")
     text.encode("utf-8")
     return text
 
